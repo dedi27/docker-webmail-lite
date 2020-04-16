@@ -1,23 +1,19 @@
 FROM ubuntu:trusty
 MAINTAINER AfterLogic Support <support@afterlogic.com>
 
+#Afterlogic docker image without internal MySQL Database
+
 # installing packages and dependencies
 ENV DEBIAN_FRONTEND noninteractive
 RUN apt-get update
-RUN apt-get -y install wget unzip supervisor apache2 libapache2-mod-php5 mysql-server php5 php5-common php5-curl php5-fpm php5-cli php5-mysqlnd php5-mcrypt
+RUN apt-get -y install wget unzip supervisor apache2 libapache2-mod-php5 php5 php5-common php5-curl php5-fpm php5-cli php5-mysqlnd php5-mcrypt
 RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf
 
 # adding configuration files and scripts
 ADD start-apache2.sh /start-apache2.sh
-ADD start-mysqld.sh /start-mysqld.sh
 ADD run.sh /run.sh
-ADD my.cnf /etc/mysql/conf.d/my.cnf
 ADD supervisord-apache2.conf /etc/supervisor/conf.d/supervisord-apache2.conf
-ADD supervisord-mysqld.conf /etc/supervisor/conf.d/supervisord-mysqld.conf
 RUN chmod 755 /*.sh
-
-# deleting default database
-RUN rm -rf /var/lib/mysql/*
 
 # setting up default apache config
 ADD apache.conf /etc/apache2/sites-available/000-default.conf
@@ -39,11 +35,11 @@ COPY afterlogic.php /var/www/html/afterlogic.php
 RUN rm -rf /tmp/alwm
 
 # setting php configuration values
-ENV PHP_UPLOAD_MAX_FILESIZE 64M
-ENV PHP_POST_MAX_SIZE 128M
+ENV PHP_UPLOAD_MAX_FILESIZE 20M
+ENV PHP_POST_MAX_SIZE 40M
 
-# adding mysql volumes
-VOLUME  ["/etc/mysql", "/var/lib/mysql" ]
+# adding afterlogic data volumes
+VOLUME "/var/www/html/data"
 
-EXPOSE 80 3306
+EXPOSE 80
 CMD ["/run.sh"]
